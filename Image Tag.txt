@@ -4,7 +4,7 @@
 
 <h2>HTML Images
 <br>
-Mr.Saksham
+Mr.vansh
 </h2>
 
 <p>HTML images are defined with the img tag:</p>
