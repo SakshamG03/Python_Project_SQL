@@ -4,11 +4,10 @@
 
 <h2>HTML Images
 <br>
-Mr.Saksham Goyal 123
+Saksham,Vansh,Tanmay
 </h2>
 
-<p>This is a new edit file.
-We are working on a python + sql project</p>
+<p>This is the final project.We are working on Python</p>
 
 </body>
 </html>
