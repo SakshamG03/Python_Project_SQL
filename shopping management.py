@@ -24,6 +24,97 @@ def center_print(text):
 #Functions defined for Admin Page
 #Function to add a new product
 
+def add_product(cursor, connection):
+    center_print("=== Add New Product ===")
+
+    name = input("Enter product name: ")
+    category = input("Enter product category: ")
+    price = float(input("Enter product price: "))
+    stock_qty = int(input("Enter product stock quantity: "))
+
+    # SQL query to insert product
+    sql = "INSERT INTO products (name, category, price, stock_quantity) VALUES (%s, %s, %s, %s)"
+    values = (name, category, price, stock_qty)
+
+    cursor.execute(sql, values)
+    connection.commit()
+
+    center_print("Product '" + name + "' added successfully.")
+    input("Press enter to continue...")
+
+def update_product(cursor, connection):
+    center_print("=== Update Product ===")
+    product_id = int(input("Enter product ID to update: "))
+
+    cursor.execute("SELECT * FROM products WHERE product_id = %s", (product_id,))
+    product = cursor.fetchone()
+
+    if not product:
+        clear_screen()
+        center_print("Product not found.")
+        return
+
+    center_print("Current details:")
+    center_print("Name = " + product[1] + ", Category = " + product[2] +", Price = " + str(product[3]) + ", Stock = " + str(product[4]))
+
+    # Input new values (skip if empty)
+    name = input("Enter new name (press enter to skip): ") or product[1]
+    category = input("Enter new category (press enter to skip): ") or product[2]
+    price = input("Enter new price (press enter to skip): ") or product[3]
+    stock_quantity = input("Enter new stock quantity (press enter to skip): ") or product[4]
+
+    # SQL query to update product
+    sql = "UPDATE products SET name = %s, category = %s, price = %s, stock_quantity = %s WHERE product_id = %s"
+    values = (name, category, price, stock_quantity, product_id)
+
+    cursor.execute(sql, values)
+    connection.commit()
+
+
+    center_print("Product ID '" + str(product_id) + "' updated successfully.")
+    input("Press enter to continue...")
+
+
+def delete_product(cursor, connection):
+    center_print("=== Delete Product ===")
+    product_id = int(input("Enter product ID to delete: "))
+
+    # SQL query to delete product
+    sql = "DELETE FROM products WHERE product_id = %s"
+
+    cursor.execute(sql, (product_id,))
+    connection.commit()
+
+
+    center_print("Product ID '" + str(product_id) + "' deleted successfully.")
+    input("Press enter to continue...")
+
+
+def view_products(cursor):
+    center_print("=== Available Products ===")
+    print()
+    print("ID".ljust(5) + "Name".ljust(20) + "Category".ljust(15) + "Price".ljust(10) + "Stock".ljust(10))
+    print("-" * 60)
+
+    cursor.execute("SELECT * FROM products")
+    products = cursor.fetchall()
+
+    if not products:
+        center_print("No products available.")
+        return
+
+    for product in products:
+        product_id = str(product[0]).ljust(5)
+        name = product[1].ljust(20)
+        category = product[2].ljust(15)
+        price = str(product[3]).ljust(10)
+        stock = str(product[4]).ljust(10)
+
+        print(product_id + name + category + price + stock)
+
+    input("\nPress Enter to continue...")
+
+
 def admin_menu(cursor, connection):
     while True:
         clear_screen()
@@ -58,6 +149,175 @@ def admin_menu(cursor, connection):
 # Functions defined for Customer page
 
 
+
+def view_products_customer(cursor):
+    print()
+    center_print("=== Available Products ===")
+    print()
+
+    print("ID".ljust(5) + "Name".ljust(20) + "Category".ljust(15) + "Price".ljust(10) )
+    print("-" * 60)
+
+    cursor.execute("SELECT * FROM products")
+    products = cursor.fetchall()
+
+    # Display each product
+    for product in products:
+        product_id = str(product[0]).ljust(5)
+        name = product[1].ljust(20)
+        category = product[2].ljust(15)
+        price = str(product[3]).ljust(10)
+
+        print(product_id + name + category + price )
+
+    input("\nPress Enter to continue...")
+
+
+def add_to_cart(cursor):
+    clear_screen()
+    view_products_customer(cursor)  # Show available products
+    while True:
+
+        product_id = int(input("Enter the product ID to add to cart: "))
+        quantity = int(input("Enter the quantity: "))
+
+        cursor.execute("SELECT * FROM products WHERE product_id = %s", (product_id,))
+        product = cursor.fetchone()
+
+        if not product:
+            center_print("Product not found.")
+            input("Press Enter to continue...")
+            continue  # Ask for product ID again
+
+        # Check if product is available in stock
+        if quantity > product[4]:
+            center_print("Not enough stock available.")
+            input("Press Enter to continue...")
+            continue  # Ask for product ID again
+
+        for item in cart:
+            if item['product_id'] == product_id:
+                item['quantity'] += quantity
+                center_print("Updated quantity of '" + item['name'] + "' to " + str(item['quantity']) + ".")
+                break
+        else:
+            # Add product to cart
+            cart.append({"product_id": product_id, "name": product[1], "price": product[3], "quantity": quantity})
+            center_print("Added '" + str(quantity) + "' of '" + product[1] + "' to cart.")
+
+        ask = input("Do you want to add more items? (yes/no): ").strip().lower()
+        if ask != 'yes':
+            break  # Exit the loop if the user does not want to add more items
+
+    # Final message before returning to the menu
+    input("Press Enter to return to the menu...")
+
+
+def view_cart(cursor):
+    print()
+    center_print("=== Your Shopping Cart ===")
+
+    if not cart:
+        center_print("Your cart is empty.")
+        input("Press Enter to continue...")
+        return
+
+    # Column headers
+    print("ID".ljust(5) + "Name".ljust(20) + "Price".ljust(10) + "Quantity".ljust(10))
+    print("-" * 55)
+
+    # Display each item in the cart
+    for index, item in enumerate(cart):
+        product_id = str(index + 1).ljust(5)  # Assuming ID starts from 1 for display
+        name = item["name"].ljust(20)
+        price = str(item["price"]).ljust(10)
+        quantity = str(item["quantity"]).ljust(10)
+
+        print(product_id + name + price + quantity)
+
+    input("\nPress Enter to continue...")
+
+
+def update_cart(cursor):
+    print()
+    center_print("=== Update Cart ===")
+
+    if not cart:
+        center_print("Your cart is empty.")
+        input("Press Enter to continue")
+        return
+
+    # Display the cart items
+    print("Current items in your cart:")
+
+    # Display the cart items as a table
+    print("ID".ljust(5) + "Product Name".ljust(20) + "Quantity".ljust(10) + "Price")
+    print("-" * 45)
+    for i, item in enumerate(cart, 1):
+        print(str(i).ljust(5) + item['name'].ljust(20) + str(item['quantity']).ljust(10) + str(item['price']))
+
+    # Ask which item to update
+    item_number = int(input("Enter the item number to update (or 0 to cancel): ").strip())
+
+    if item_number == 0:
+        return
+
+    if 1 <= item_number <= len(cart):
+        selected_item = cart[item_number - 1]
+
+        center_print("Selected: " + selected_item['name'] + ", Quantity: " + str(selected_item['quantity']))
+        print("1. Update Quantity")
+        print("2. Remove Item")
+
+        action_choice = input("Enter your choice: ").strip()
+
+        if action_choice == '1':
+            new_quantity = int(
+                input("Enter new quantity for '" + selected_item['name'] + "' (or 0 to remove): ").strip())
+            if new_quantity == 0:
+                cart.remove(selected_item)
+                center_print("'" + selected_item['name'] + "' removed from the cart.")
+            else:
+                selected_item['quantity'] = new_quantity
+                center_print("Quantity for '" + selected_item['name'] + "' updated to " + str(new_quantity) + ".")
+
+        elif action_choice == '2':
+            cart.remove(selected_item)
+            center_print("'" + selected_item['name'] + "' removed from the cart.")
+
+        else:
+            center_print("Invalid choice. Returning to the menu.")
+    else:
+        center_print("Invalid item number.")
+
+    input("Press Enter to return to the menu...")
+
+
+
+def checkout(cursor):
+    print()
+    center_print("=== Checkout ===")
+
+    if not cart:
+        center_print("Your cart is empty. Cannot checkout.")
+        input("Press Enter to continue...")
+        return
+
+    # Display the cart items first
+    view_cart(cursor)  # Display the entire cart before proceeding to checkout
+
+    total_price = sum(item["price"] * item["quantity"] for item in cart)
+
+    center_print("Total Price: " + str(total_price) + " Rs")
+    confirm = input("Confirm checkout? (yes/no): ").strip().lower()
+
+    if confirm == "yes":
+        cart.clear()  # Clear the cart after successful checkout
+        center_print("Checkout successful. Thank you for your purchase!")
+    else:
+        center_print("Checkout cancelled.")
+
+    input("Press Enter to return to the menu...")
 
 def customer_menu(cursor):
     while True:
@@ -115,7 +375,15 @@ def manage_admins(cursor, db):
         clear_screen()
         center_print("=== Manage Admins ===")
         center_print("1. Add Admin")
-      
+        center_print("2. Change Password")
+        center_print("3. Delete Admin")
+        center_print("4. Return to Admin Menu")
+
+        choice = input("Enter your choice: ").strip()
+
+        if choice == '1':
+            add_admin(cursor, db)
+        elif choice == '2':
             change_admin_password(cursor, db)
         elif choice == '3':
             delete_admin(cursor, db)
@@ -129,13 +397,20 @@ def delete_admin(cursor, db):
     print()
     username = input("Enter the admin username to delete: ")
 
-
+    cursor.execute("DELETE FROM admin_users WHERE username = %s", (username,))
+    db.commit()
+    center_print("Admin user '" + username + "' deleted successfully.")
     input("Press enter to continue...")
 
 def change_admin_password(cursor, db):
     print()
     username = input("Enter admin username: ")
     old_password = input("Enter current password: ")
+
+    # Check if the admin exists
+    cursor.execute("SELECT * FROM admin_users WHERE username = %s AND password = %s", (username, old_password))
+    admin = cursor.fetchone()
+
     if admin:
         new_password = input("Enter new password: ")
 
@@ -151,6 +426,9 @@ def change_admin_password(cursor, db):
 def add_admin(cursor, db):
     print()
     username = input("Enter new admin username: ")
+    password = input("Enter new admin password: ")
+
+    # Add admin to the database (plain text password)
     cursor.execute("INSERT INTO admin_users (username, password) VALUES (%s, %s)", (username, password))
     db.commit()
     center_print("Admin user '" + username + "' added successfully.")
@@ -162,7 +440,7 @@ def welcome_page():
 
     center_print(" WELCOME TO THE SHOPPING MANAGEMENT SYSTEM ")
     center_print("-" * 55)  # Separator line
-    
+    center_print(" Created by: Saksham Goyal")
     center_print(" Class: COMPUTER SCIENCE XII PCM ")
     center_print("=" * 55)
 
