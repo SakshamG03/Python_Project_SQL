@@ -115,6 +115,41 @@ def view_products(cursor):
     input("\nPress Enter to continue...")
 
 
+def view_orders(cursor):
+    print()
+    center_print("=== View Orders ===")
+    print()
+    # Retrieve all orders
+    cursor.execute("SELECT * FROM orders")
+    orders = cursor.fetchall()
+
+    if not orders:
+        center_print("No orders found.")
+    else:
+        print("Order ID".ljust(10) + "Customer Name".ljust(20) + "Total Price".ljust(15) + "Order Date")
+        print("-" * 60)
+        for order in orders:
+            print(str(order[0]).ljust(10) + order[1].ljust(20) + str(order[2]).ljust(15) + str(order[3]))
+
+        # Optionally, view details of each order
+        order_id = input("\nEnter order ID to view details (or press 0 to go back): ").strip()
+        if order_id != '0':
+            cursor.execute("SELECT * FROM order_items WHERE order_id = %s", (order_id,))
+            items = cursor.fetchall()
+            if items:
+                print("\nItems in Order #" + order_id)
+                print()
+                print("Product Name".ljust(20) + "Quantity".ljust(10) + "Price")
+                print("-" * 40)
+                for item in items:
+                    print(item[2].ljust(20) + str(item[3]).ljust(10) + str(item[4]))
+                print("-"* 40)
+            else:
+                center_print("No items found for this order.")
+
+    input("Press Enter to return to the menu...")
+
+
 def admin_menu(cursor, connection):
     while True:
         clear_screen()
@@ -123,8 +158,9 @@ def admin_menu(cursor, connection):
         center_print("2. Update Product")
         center_print("3. Delete Product")
         center_print("4. View Products")
-        center_print("5. Manage Admins")
-        center_print("6. Logout")
+        center_print("5. View Orders")
+        center_print("6. Manage Admins")
+        center_print("7. Logout")
 
         choice = input("\nEnter your choice: ")
 
@@ -137,8 +173,10 @@ def admin_menu(cursor, connection):
         elif choice == "4":
             view_products(cursor)
         elif choice == "5":
-            manage_admins(cursor,connection)
+            view_orders(cursor)
         elif choice == "6":
+            manage_admins(cursor, connection)
+        elif choice == "7":
             break
         else:
             center_print("Invalid choice. Please try again.")
@@ -148,7 +186,7 @@ def admin_menu(cursor, connection):
 
 # Functions defined for Customer page
 
-
+cart = [] #Empty List for Cart
 
 def view_products_customer(cursor):
     print()
@@ -294,7 +332,7 @@ def update_cart(cursor):
 
 
 
-def checkout(cursor):
+def checkout(cursor,connection):
     print()
     center_print("=== Checkout ===")
 
@@ -303,12 +341,25 @@ def checkout(cursor):
         input("Press Enter to continue...")
         return
 
-    # Display the cart items first
     view_cart(cursor)  # Display the entire cart before proceeding to checkout
+
+    customer_name = input("Enter your name: ").strip()
 
     total_price = sum(item["price"] * item["quantity"] for item in cart)
 
-    center_print("Total Price: " + str(total_price) + " Rs")
+    cursor.execute("INSERT INTO orders (customer_name, total_price)VALUES (%s, %s)", (customer_name, total_price))
+
+    connection.commit()
+
+    order_id = cursor.lastrowid
+
+    # Insert each item into 'order_items' table
+    for item in cart:
+        cursor.execute("INSERT INTO order_items (order_id, product_name, quantity, price)VALUES (%s, %s, %s, %s)", (order_id, item['name'], item['quantity'], item['price']))
+
+    connection.commit()
+
+    center_print("Your Total: " + str(total_price) + " Rs")
     confirm = input("Confirm checkout? (yes/no): ").strip().lower()
 
     if confirm == "yes":
@@ -319,7 +370,7 @@ def checkout(cursor):
 
     input("Press Enter to return to the menu...")
 
-def customer_menu(cursor):
+def customer_menu(cursor,connection):
     while True:
         clear_screen()
         center_print("--- Customer Menu ---")
@@ -341,11 +392,12 @@ def customer_menu(cursor):
         elif choice == "4":
             update_cart(cursor)
         elif choice == "5":
-            checkout(cursor)
+            checkout(cursor,connection)
         elif choice =="6":
             break
         else:
             center_print("Invalid choice. Please try again.")
+            input()
 
 
 #Function for welcome page and login
@@ -441,7 +493,7 @@ def welcome_page():
     center_print(" WELCOME TO THE SHOPPING MANAGEMENT SYSTEM ")
     center_print("-" * 55)  # Separator line
     center_print(" Created by: Saksham Goyal")
-    center_print(" Class: COMPUTER SCIENCE XII PCM ")
+    center_print(" Class: XII COMPUTER SCIENCE PCM ")
     center_print("=" * 55)
 
     time.sleep(1)
@@ -466,7 +518,7 @@ def main():
             if admin_login(cursor):
                 admin_menu(cursor, connection)  # If login is successful, enter Admin Menu
         elif choice == "2":  # Customer Page
-            customer_menu(cursor)  # Go to customer menu
+            customer_menu(cursor,connection)  # Go to customer menu
         elif choice == "3":  # Exit
             center_print("Thank you for using the system!")
             time.sleep(5)
