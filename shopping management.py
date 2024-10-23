@@ -121,7 +121,8 @@ def view_orders(cursor):
     center_print("=== Today's Orders ===")
     print()
     today_date = date.today()
-
+    center_print("Date: "+ str(today_date))
+    print()
     cursor.execute("SELECT order_id, customer_name, customer_mobile, total_price, TIME(order_date) as order_time FROM orders WHERE DATE(order_date)= %s",(today_date,))
     orders = cursor.fetchall()
 
@@ -403,9 +404,10 @@ def print_bill(customer_name, customer_mobile, total_price, gst, discount, final
 def search_orders(cursor):
     clear_screen()
     center_print("=== Search Previous Orders ===")
+    print()
     mobile_number = input("Enter mobile number: ").strip()
 
-    cursor.execute("SELECT order_id, customer_name, total_price, order_date FROM orders WHERE customer_mobile = %s", (mobile_number,))
+    cursor.execute("SELECT order_id, customer_name, total_price, DATE(order_date) FROM orders WHERE customer_mobile = %s", (mobile_number,))
 
     orders = cursor.fetchall()
 
@@ -413,7 +415,7 @@ def search_orders(cursor):
         center_print("No orders found for this mobile number.")
         input("Press Enter to return to the menu...")
         return
-
+    print()
     center_print("=== Order History ===")
     print("Order ID".ljust(15) + "Customer Name".ljust(20) + "Total Price".ljust(15) + "Order Date")
     print("-" * 60)
@@ -421,7 +423,7 @@ def search_orders(cursor):
     for order in orders:
         print(str(order[0]).ljust(15) + order[1].ljust(20) + ("Rs. " + str(order[2])).ljust(15) + str(order[3]))
     print("-" * 60)
-
+    print()
     order_id = input("Enter Order ID to view details (or press Enter to go back): ").strip()
 
     if order_id:
@@ -431,8 +433,9 @@ def search_orders(cursor):
 
 
 def view_order_details(cursor, order_id):
+    print()
     center_print("=== Order Details ===")
-
+    print()
     cursor.execute("SELECT order_items.product_name, order_items.quantity, order_items.price FROM order_items WHERE order_items.order_id = %s", (order_id,))
     items = cursor.fetchall()
 
@@ -445,6 +448,7 @@ def view_order_details(cursor, order_id):
               "Rs. " + str(item[2]).ljust(8) + "Rs. " + str(total_item_price).ljust(8))
 
     print("-" * 60)
+    print()
     input("Press Enter to return to the menu...")
 
 
