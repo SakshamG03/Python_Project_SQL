@@ -8,7 +8,7 @@ def connect_db():
     return mysql.connector.connect(
         host="localhost",
         username="root",   # Replace with your MySQL username
-        password="03april2008",   # Replace with your MySQL password
+        password="vansh20@07",   # Replace with your MySQL password
         database="shopping"   # Replace with your database name
     )
 
@@ -29,13 +29,14 @@ def add_product(cursor, connection):
     center_print("=== Add New Product ===")
 
     name = input("Enter product name: ")
+    product_unit = input("Enter product unit:")
     category = input("Enter product category: ")
     price = float(input("Enter product price: "))
     stock_qty = int(input("Enter product stock quantity: "))
 
     # SQL query to insert product
-    sql = "INSERT INTO products (name, category, price, stock_quantity) VALUES (%s, %s, %s, %s)"
-    values = (name, category, price, stock_qty)
+    sql = "INSERT INTO products (name,product_unit, category, price, stock_quantity) VALUES (%s,%s, %s, %s, %s)"
+    values = (name,product_unit, category, price, stock_qty)
 
     cursor.execute(sql, values)
     connection.commit()
@@ -56,17 +57,18 @@ def update_product(cursor, connection):
         return
 
     center_print("Current details:")
-    center_print("Name = " + product[1] + ", Category = " + product[2] +", Price = " + str(product[3]) + ", Stock = " + str(product[4]))
+    center_print("Name = " + product[1] + ",unit=" + str(product[5]) +  ", Category = " + product[2] +", Price = " + str(product[3]) + ", Stock = " + str(product[4]))
 
     # Input new values (skip if empty)
     name = input("Enter new name (press enter to skip): ") or product[1]
+    product_unit = input("enter product unit:") or product[5]
     category = input("Enter new category (press enter to skip): ") or product[2]
     price = input("Enter new price (press enter to skip): ") or product[3]
     stock_quantity = input("Enter new stock quantity (press enter to skip): ") or product[4]
 
     # SQL query to update product
-    sql = "UPDATE products SET name = %s, category = %s, price = %s, stock_quantity = %s WHERE product_id = %s"
-    values = (name, category, price, stock_quantity, product_id)
+    sql = "UPDATE products SET name = %s,product_unit = %s, category = %s, price = %s, stock_quantity = %s WHERE product_id = %s"
+    values = (name,product_unit, category, price, stock_quantity, product_id)
 
     cursor.execute(sql, values)
     connection.commit()
@@ -94,7 +96,7 @@ def delete_product(cursor, connection):
 def view_products(cursor):
     center_print("=== Available Products ===")
     print()
-    print("ID".ljust(5) + "Name".ljust(20) + "Category".ljust(15) + "Price".ljust(10) + "Stock".ljust(10))
+    print("ID".ljust(5) + "Name".ljust(20) +"product_unit".ljust(15) + "Category".ljust(15) + "Price".ljust(10) + "Stock".ljust(10))
     print("-" * 60)
 
     cursor.execute("SELECT * FROM products")
@@ -107,11 +109,12 @@ def view_products(cursor):
     for product in products:
         product_id = str(product[0]).ljust(5)
         name = product[1].ljust(20)
+        product_unit = product[5].ljust(15)
         category = product[2].ljust(15)
         price = str(product[3]).ljust(10)
         stock = str(product[4]).ljust(10)
 
-        print(product_id + name + category + price + stock)
+        print(product_id + name +product_unit +  category + price + stock)
 
     input("\nPress Enter to continue...")
 
@@ -185,7 +188,7 @@ def view_products_customer(cursor):
     center_print("=== Available Products ===")
     print()
 
-    print("ID".ljust(5) + "Name".ljust(20) + "Category".ljust(15) + "Price".ljust(10) )
+    print("ID".ljust(5) + "Name".ljust(10) + "Unit".ljust(6) + "Category".ljust(15) + "Price".ljust(10) )
     print("-" * 60)
 
     cursor.execute("SELECT * FROM products")
@@ -194,11 +197,12 @@ def view_products_customer(cursor):
     # Display each product
     for product in products:
         product_id = str(product[0]).ljust(5)
-        name = product[1].ljust(20)
+        name = product[1].ljust(10)
+        product_unit = product[5].ljust(6)
         category = product[2].ljust(15)
         price = str(product[3]).ljust(10)
 
-        print(product_id + name + category + price )
+        print(product_id + name + product_unit + category + price )
 
     input("\nPress Enter to continue...")
 
@@ -232,7 +236,7 @@ def add_to_cart(cursor):
                 break
         else:
             # Add product to cart
-            cart.append({"product_id": product_id, "name": product[1], "price": product[3], "quantity": quantity})
+            cart.append({"product_id": product_id, "name": product[1],"product_unit": product[5], "price": product[3], "quantity": quantity})
             center_print("Added '" + str(quantity) + "' of '" + product[1] + "' to cart.")
 
         ask = input("Do you want to add more items? (yes/no): ").strip().lower()
@@ -253,17 +257,18 @@ def view_cart(cursor):
         return
 
     # Column headers
-    print("ID".ljust(5) + "Name".ljust(20) + "Price".ljust(10) + "Quantity".ljust(10))
+    print("ID".ljust(5) + "Name".ljust(20) + "Unit".ljust(6) + "Price".ljust(10) + "Quantity".ljust(10))
     print("-" * 55)
 
     # Display each item in the cart
     for index, item in enumerate(cart):
         product_id = str(index + 1).ljust(5)  # Assuming ID starts from 1 for display
         name = item["name"].ljust(20)
+        product_unit = item["product_unit"].ljust(6)
         price = str(item["price"]).ljust(10)
         quantity = str(item["quantity"]).ljust(10)
 
-        print(product_id + name + price + quantity)
+        print(product_id + name + product_unit + price + quantity)
 
     input("\nPress Enter to continue...")
 
@@ -281,10 +286,10 @@ def update_cart(cursor):
     print("Current items in your cart:")
 
     # Display the cart items as a table
-    print("ID".ljust(5) + "Product Name".ljust(20) + "Quantity".ljust(10) + "Price")
+    print("ID".ljust(5) + "Product Name".ljust(20) + "Unit".ljust(6) + "Quantity".ljust(10) + "Price")
     print("-" * 45)
     for i, item in enumerate(cart, 1):
-        print(str(i).ljust(5) + item['name'].ljust(20) + str(item['quantity']).ljust(10) + str(item['price']))
+        print(str(i).ljust(5) + item['name'].ljust(20) + item["product_unit"].ljust(6) + str(item['quantity']).ljust(10) + str(item['price']))
 
     # Ask which item to update
     item_number = int(input("Enter the item number to update (or 0 to cancel): ").strip())
@@ -337,6 +342,8 @@ def checkout(cursor,connection):
 
     customer_name = input("Enter your name: ").strip()
     customer_mobile = input("Enter your mobile number: ").strip()
+    
+         
 
     total_price = sum(item["price"] * item["quantity"] for item in cart)
     gst= float(total_price) * float(0.18)
@@ -368,6 +375,7 @@ def checkout(cursor,connection):
     input("Press Enter to return to the menu...")
 
 
+
 def print_bill(customer_name, customer_mobile, total_price, gst, discount, final_total):
     clear_screen()
     center_print("=" * 60)
@@ -386,7 +394,7 @@ def print_bill(customer_name, customer_mobile, total_price, gst, discount, final
     # Loop through the cart and display each item
     for item in cart:
         total_item_price = item['quantity'] * item['price']
-        print(item['name'].ljust(20) + str(item['quantity']).ljust(10) + "Rs. " + str(item['price']).ljust(8) + "Rs. " + str(total_item_price).ljust(8))
+        print(item['name'].ljust(20) + str(item['quantity']).ljust(3) + item["product_unit"].ljust(7) + "Rs. " + str(item['price']).ljust(8) + "Rs. " + str(total_item_price).ljust(8))
 
     print("-" * 60)
 
