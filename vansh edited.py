@@ -345,8 +345,8 @@ def checkout(cursor,connection):
 
     if customer_name =="" or customer_mobile == "":
         center_print("Enter proper details and content")
-        center_print("Please enter to continue .. ")
-        return
+        input("Please enter to continue .. ")
+
 
     total_price = sum(item["price"] * item["quantity"] for item in cart)
     gst= float(total_price) * float(0.18)
@@ -588,7 +588,7 @@ def welcome_page():
 
     center_print(" WELCOME TO THE SHOPPING MANAGEMENT SYSTEM ")
     center_print("-" * 55)  # Separator line
-    center_print(" Created by: Saksham, Vansh, Tanmay")
+    center_print(" Created by: Study Stackers")
     center_print(" Class: COMPUTER SCIENCE XII PCM ")
     center_print("=" * 55)
 
