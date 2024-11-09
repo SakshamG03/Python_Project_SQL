@@ -8,7 +8,7 @@ def connect_db():
     return mysql.connector.connect(
         host="localhost",
         username="root",   # Replace with your MySQL username
-        password="vansh20@07",   # Replace with your MySQL password
+        password="03april2008",   # Replace with your MySQL password
         database="shopping"   # Replace with your database name
     )
 
@@ -342,8 +342,11 @@ def checkout(cursor,connection):
 
     customer_name = input("Enter your name: ").strip()
     customer_mobile = input("Enter your mobile number: ").strip()
-    
-         
+
+    if customer_name =="" or customer_mobile == "":
+        center_print("Enter proper details and content")
+        center_print("Please enter to continue .. ")
+        return
 
     total_price = sum(item["price"] * item["quantity"] for item in cart)
     gst= float(total_price) * float(0.18)
@@ -585,7 +588,7 @@ def welcome_page():
 
     center_print(" WELCOME TO THE SHOPPING MANAGEMENT SYSTEM ")
     center_print("-" * 55)  # Separator line
-    center_print(" Created by: Saksham Goyal")
+    center_print(" Created by: Saksham, Vansh, Tanmay")
     center_print(" Class: COMPUTER SCIENCE XII PCM ")
     center_print("=" * 55)
 
