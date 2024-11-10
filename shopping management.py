@@ -31,11 +31,12 @@ def add_product(cursor, connection):
     name = input("Enter product name: ")
     category = input("Enter product category: ")
     price = float(input("Enter product price: "))
+    product_unit = input("Enter product unit: ")
     stock_qty = int(input("Enter product stock quantity: "))
 
     # SQL query to insert product
-    sql = "INSERT INTO products (name, category, price, stock_quantity) VALUES (%s, %s, %s, %s)"
-    values = (name, category, price, stock_qty)
+    sql = "INSERT INTO products (name, category, price, product_unit, stock_quantity) VALUES (%s, %s, %s, %s, %s)"
+    values = (name, category, price, product_unit, stock_qty)
 
     cursor.execute(sql, values)
     connection.commit()
@@ -56,17 +57,18 @@ def update_product(cursor, connection):
         return
 
     center_print("Current details:")
-    center_print("Name = " + product[1] + ", Category = " + product[2] +", Price = " + str(product[3]) + ", Stock = " + str(product[4]))
+    center_print("Name = " + product[1] + ", Category = " + product[2] +", Price = " + str(product[3]) + ", Unit = " + product[5] + ", Stock = " + str(product[4]))
 
     # Input new values (skip if empty)
     name = input("Enter new name (press enter to skip): ") or product[1]
     category = input("Enter new category (press enter to skip): ") or product[2]
     price = input("Enter new price (press enter to skip): ") or product[3]
+    product_unit = input("Enter new unit (press enter to skip): ") or product[5]
     stock_quantity = input("Enter new stock quantity (press enter to skip): ") or product[4]
 
     # SQL query to update product
-    sql = "UPDATE products SET name = %s, category = %s, price = %s, stock_quantity = %s WHERE product_id = %s"
-    values = (name, category, price, stock_quantity, product_id)
+    sql = "UPDATE products SET name = %s, category = %s, price = %s, product_unit = %s, stock_quantity = %s WHERE product_id = %s"
+    values = (name, category, price, product_unit, stock_quantity, product_id)
 
     cursor.execute(sql, values)
     connection.commit()
@@ -94,7 +96,7 @@ def delete_product(cursor, connection):
 def view_products(cursor):
     center_print("=== Available Products ===")
     print()
-    print("ID".ljust(5) + "Name".ljust(20) + "Category".ljust(15) + "Price".ljust(10) + "Stock".ljust(10))
+    print("ID".ljust(5) + "Name".ljust(20) + "Category".ljust(15) + "Price".ljust(10) + "Unit".ljust(7) + "Stock".ljust(10))
     print("-" * 60)
 
     cursor.execute("SELECT * FROM products")
@@ -109,9 +111,10 @@ def view_products(cursor):
         name = product[1].ljust(20)
         category = product[2].ljust(15)
         price = str(product[3]).ljust(10)
+        product_unit=str(product[5]).ljust(7)
         stock = str(product[4]).ljust(10)
 
-        print(product_id + name + category + price + stock)
+        print(product_id + name + category + price + product_unit + stock)
 
     input("\nPress Enter to continue...")
 
@@ -147,12 +150,13 @@ def admin_menu(cursor, connection):
         clear_screen()
         center_print("--- Admin Menu ---")
         center_print("1. Add Product")
-        center_print("2. Update Product Stock")
+        center_print("2. Update Product")
         center_print("3. Delete Product")
         center_print("4. View Products")
         center_print("5. View Orders")
-        center_print("6. Manage Admins")
-        center_print("7. Logout")
+        center_print("6. Search Customer Orders")
+        center_print("7. Manage Admins")
+        center_print("8. Logout")
 
         choice = input("\nEnter your choice: ")
 
@@ -167,8 +171,10 @@ def admin_menu(cursor, connection):
         elif choice == "5":
             view_orders(cursor)
         elif choice == "6":
-            manage_admins(cursor, connection)
+            search_orders(cursor)
         elif choice == "7":
+            manage_admins(cursor, connection)
+        elif choice == "8":
             break
         else:
             center_print("Invalid choice. Please try again.")
@@ -185,7 +191,7 @@ def view_products_customer(cursor):
     center_print("=== Available Products ===")
     print()
 
-    print("ID".ljust(5) + "Name".ljust(20) + "Category".ljust(15) + "Price".ljust(10) )
+    print("ID".ljust(5) + "Name".ljust(20) + "Category".ljust(15) + "Price".ljust(10) + "Unit".ljust(7) )
     print("-" * 60)
 
     cursor.execute("SELECT * FROM products")
@@ -197,8 +203,9 @@ def view_products_customer(cursor):
         name = product[1].ljust(20)
         category = product[2].ljust(15)
         price = str(product[3]).ljust(10)
+        product_unit=str(product[5]).ljust(7)
 
-        print(product_id + name + category + price )
+        print(product_id + name + category + price + product_unit)
 
     input("\nPress Enter to continue...")
 
@@ -232,7 +239,7 @@ def add_to_cart(cursor):
                 break
         else:
             # Add product to cart
-            cart.append({"product_id": product_id, "name": product[1], "price": product[3], "quantity": quantity})
+            cart.append({"product_id": product_id, "name": product[1], "price": product[3], "product_unit":product[5], "quantity": quantity})
             center_print("Added '" + str(quantity) + "' of '" + product[1] + "' to cart.")
 
         ask = input("Do you want to add more items? (yes/no): ").strip().lower()
@@ -253,7 +260,7 @@ def view_cart(cursor):
         return
 
     # Column headers
-    print("ID".ljust(5) + "Name".ljust(20) + "Price".ljust(10) + "Quantity".ljust(10))
+    print("ID".ljust(5) + "Name".ljust(20) + "Price".ljust(10) + "Unit".ljust(7) + "Quantity".ljust(10))
     print("-" * 55)
 
     # Display each item in the cart
@@ -261,9 +268,10 @@ def view_cart(cursor):
         product_id = str(index + 1).ljust(5)  # Assuming ID starts from 1 for display
         name = item["name"].ljust(20)
         price = str(item["price"]).ljust(10)
+        product_unit=str(item["product_unit"]).ljust(7)
         quantity = str(item["quantity"]).ljust(10)
 
-        print(product_id + name + price + quantity)
+        print(product_id + name + price + product_unit + quantity)
 
     input("\nPress Enter to continue...")
 
@@ -281,10 +289,10 @@ def update_cart(cursor):
     print("Current items in your cart:")
 
     # Display the cart items as a table
-    print("ID".ljust(5) + "Product Name".ljust(20) + "Quantity".ljust(10) + "Price")
+    print("ID".ljust(5) + "Product Name".ljust(20) + "Quantity".ljust(10) + "Unit".ljust(7) + "Price")
     print("-" * 45)
     for i, item in enumerate(cart, 1):
-        print(str(i).ljust(5) + item['name'].ljust(20) + str(item['quantity']).ljust(10) + str(item['price']))
+        print(str(i).ljust(5) + item['name'].ljust(20) + str(item['quantity']).ljust(10) + str(item['product_unit']).ljust(7) + str(item['price']))
 
     # Ask which item to update
     item_number = int(input("Enter the item number to update (or 0 to cancel): ").strip())
@@ -338,6 +346,12 @@ def checkout(cursor,connection):
     customer_name = input("Enter your name: ").strip()
     customer_mobile = input("Enter your mobile number: ").strip()
 
+    if customer_name =="" or customer_mobile == "":
+        center_print("Enter proper details and content")
+        input("Please enter to continue .. ")
+        return
+
+
     total_price = sum(item["price"] * item["quantity"] for item in cart)
     gst= float(total_price) * float(0.18)
     discount= float(total_price) * float(0.10)
@@ -386,7 +400,7 @@ def print_bill(customer_name, customer_mobile, total_price, gst, discount, final
     # Loop through the cart and display each item
     for item in cart:
         total_item_price = item['quantity'] * item['price']
-        print(item['name'].ljust(20) + str(item['quantity']).ljust(10) + "Rs. " + str(item['price']).ljust(8) + "Rs. " + str(total_item_price).ljust(8))
+        print(item['name'].ljust(20) + str(item['quantity']).ljust(3) + str(item["product_unit"]).ljust(7) + "Rs. " + str(item['price']).ljust(10) + "Rs. " + str(total_item_price).ljust(8))
 
     print("-" * 60)
 
@@ -403,7 +417,7 @@ def print_bill(customer_name, customer_mobile, total_price, gst, discount, final
 
 def search_orders(cursor):
     clear_screen()
-    center_print("=== Search Previous Orders ===")
+    center_print("=== Search Customer Orders ===")
     print()
     mobile_number = input("Enter mobile number: ").strip()
 
@@ -577,7 +591,7 @@ def welcome_page():
 
     center_print(" WELCOME TO THE SHOPPING MANAGEMENT SYSTEM ")
     center_print("-" * 55)  # Separator line
-    center_print(" Created by: Saksham Goyal")
+    center_print(" Created by: Study Stackers")
     center_print(" Class: COMPUTER SCIENCE XII PCM ")
     center_print("=" * 55)
 
