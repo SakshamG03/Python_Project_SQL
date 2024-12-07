@@ -2,7 +2,6 @@ import os
 import mysql.connector
 from datetime import date
 import time
-# Function to connect to MySQL database
 
 def connect_db():
     return mysql.connector.connect(
@@ -12,18 +11,14 @@ def connect_db():
         database="shopping"   # Replace with your database name
     )
 
-# Clear screen function
-
 def clear_screen():
     os.system('cls')
-
-# Center-aligned print function
 
 def center_print(text):
     print(text.center(60))
 
+
 #Functions defined for Admin Page
-#Function to add a new product
 
 def add_product(cursor, connection):
     center_print("=== Add New Product ===")
